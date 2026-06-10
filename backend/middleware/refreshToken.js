@@ -1,36 +1,39 @@
 const jwt = require("jsonwebtoken");
 
-exports.refreshToken = (req, res, next) => {
+exports.refreshToken = (req, res) => {
     try {
-        const prevToken = req.cookies?.jwt;
-        if (!prevToken) {
+        const token = req.cookies?.jwt;
+
+        if (!token) {
             return res.status(403).json({ message: "No refresh token found" });
         }
 
-        jwt.verify(prevToken, process.env.JWT_SECRET, (error, user) => {
-            if (error) {
-                console.log("Refresh token invalid:", error.message);
-                return res.status(403).json({ message: "Invalid refresh token" });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const newToken = jwt.sign(
+            {
+                id: decoded.id,
+                role: decoded.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h" 
             }
+        );
 
-            // Create a new token
-            const newToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-                expiresIn: "30s",
-            });
-
-            res.cookie("jwt", newToken, {
-                path: "/",
-                httpOnly: true,
-                sameSite: "lax",
-                secure: false,
-                expires: new Date(Date.now() + 1000 * 30),
-            });
-
-            req.user = user;
-            next();
+        res.cookie("jwt", newToken, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: false,
+            maxAge: 60 * 60 * 1000 // 1 hour
         });
+
+        return res.json({
+            message: "Token refreshed"
+        });
+
     } catch (error) {
-        console.error("refreshToken error:", error);
-        return res.status(500).json({ message: "Server error in refreshToken" });
+        console.error("refreshToken error:", error.message);
+        return res.status(500).json({ message: "Server error" });
     }
 };

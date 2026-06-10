@@ -37,7 +37,6 @@ def after_request(response):
     return add_cors_headers(response)
 
 
-# CLEAN PLATE FUNCTION
 def clean_plate(text):
     text = text.upper().replace(" ", "")
     text = re.sub(r'[^A-Z0-9-]', '', text)
