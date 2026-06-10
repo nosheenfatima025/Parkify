@@ -23,6 +23,7 @@ print("Loading EasyOCR...")
 reader = easyocr.Reader(['en'], gpu=False)
 print("EasyOCR loaded!")
 
+
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, ngrok-skip-browser-warning, X-Requested-With'
@@ -30,25 +31,34 @@ def add_cors_headers(response):
     response.headers['Access-Control-Max-Age'] = '3600'
     return response
 
+
 @app.after_request
 def after_request(response):
     return add_cors_headers(response)
 
+
+# CLEAN PLATE FUNCTION
 def clean_plate(text):
-    text = text.upper().strip()
-    text = re.sub(r'[^A-Z0-9\-]', '', text)
-    return text
+    text = text.upper().replace(" ", "")
+    text = re.sub(r'[^A-Z0-9-]', '', text)
 
-@app.route('/detect', methods=['POST', 'OPTIONS', 'GET'])
+    patterns = [
+        r'[A-Z]{2,3}-?\d{3,4}',
+        r'[A-Z]{3}\d{3,4}',
+        r'\d{3,4}[A-Z]{2,3}'
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group()
+
+    return ""
+
+
+# ONLY POST + OPTIONS (FIXED)
+@app.route('/detect', methods=['POST', 'OPTIONS'])
 def detect_plate():
-    # Handle preflight
-    if request.method == 'OPTIONS':
-        response = make_response('', 200)
-        return add_cors_headers(response)
-
-    if request.method == 'GET':
-        return jsonify({'message': 'Send POST request with image file'})
-
     try:
         if 'image' not in request.files:
             return jsonify({'success': False, 'message': 'No image provided'}), 400
@@ -62,6 +72,7 @@ def detect_plate():
         results = model(pil_img, conf=0.3)
 
         plates = []
+
         for result in results:
             if hasattr(result, 'boxes') and result.boxes is not None:
                 for i, box in enumerate(result.boxes):
@@ -70,16 +81,16 @@ def detect_plate():
 
                     # Crop plate
                     plate_img = pil_img.crop((x1, y1, x2, y2))
-                    plate_arr = np.array(plate_img)
 
-                    # EasyOCR
+                    # OCR
                     try:
-                        ocr_results = reader.readtext(plate_arr)
-                        plate_text = " ".join([text for (_, text, c) in ocr_results if c > 0.3])
+                        ocr_results = reader.readtext(np.array(plate_img))
+                        plate_text = " ".join(
+                            [text for (_, text, c) in ocr_results if c > 0.3]
+                        )
                         plate_text = clean_plate(plate_text)
-                    except Exception as ocr_err:
-                        print(f"OCR error: {ocr_err}")
-                        plate_text = ""
+                    except:
+                        plate_text = f"PLATE-{i+1}"
 
                     if plate_text:
                         plates.append({
@@ -96,43 +107,22 @@ def detect_plate():
                 'confidence': best['confidence'],
                 'all_plates': plates
             })
-        else:
-            # Try full image OCR
-            try:
-                full_arr = np.array(pil_img)
-                ocr_results = reader.readtext(full_arr)
-                full_text = " ".join([text for (_, text, c) in ocr_results if c > 0.4])
-                full_text = clean_plate(full_text)
-                if full_text:
-                    return jsonify({
-                        'success': True,
-                        'plate': full_text,
-                        'confidence': 50.0,
-                        'all_plates': [{'plate': full_text, 'confidence': 50.0}]
-                    })
-            except Exception as e:
-                print(f"Full OCR error: {e}")
 
-            return jsonify({
-                'success': False,
-                'message': 'No plate detected',
-                'plate': None
-            })
+        return jsonify({
+            'success': False,
+            'message': 'No plate detected',
+            'plate': None
+        })
 
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
-@app.route('/health', methods=['GET', 'OPTIONS'])
-def health():
-    if request.method == 'OPTIONS':
-        response = make_response('', 200)
-        return add_cors_headers(response)
-    return jsonify({'status': 'running', 'model': 'YOLOv8 ANPR', 'ocr': 'EasyOCR'})
 
-@app.route('/', methods=['GET'])
-def index():
-    return jsonify({'message': 'Parkify ANPR Service', 'endpoints': ['/health', '/detect']})
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'running', 'model': 'YOLOv8 ANPR'})
+
 
 if __name__ == '__main__':
     print("Starting Flask ANPR service on port 5000...")

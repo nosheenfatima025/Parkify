@@ -1,44 +1,30 @@
  Vehicle = require("../models/Vehicle");
 const User = require("../models/User");
 
-// exports.addVehicle = async (req, res) => {
-//     try {
-//         const { plateNumber, userId } = req.body;
-//         if (!plateNumber || !userId)
-//             return res.status(400).json({ message: "plateNumber and userId required" });
-
-//         const exists = await Vehicle.findOne({ plateNumber });
-//         if (exists) return res.status(400).json({ message: "Vehicle already registered" });
-
-//         const QRCode = require("qrcode");
-//         const qrCode = await QRCode.toDataURL(JSON.stringify({ plateNumber, userId }));
-
-//         const vehicle = await Vehicle.create({ userId, plateNumber, qrCode });
-//         res.status(201).json({ message: "Vehicle added successfully", vehicle });
-//     } catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// };
-
 exports.addVehicle = async (req, res) => {
     try {
         const { plateNumber } = req.body;
-        const userId = req.user._id;
 
-        if (!plateNumber)
+        const userId = req.user.id; // ✅ FIXED
+
+        if (!plateNumber) {
             return res.status(400).json({ message: "plateNumber required" });
+        }
 
-        const exists = await Vehicle.findOne({ plateNumber });
-        if (exists) return res.status(400).json({ message: "Vehicle already registered" });
+        const exists = await Vehicle.findOne({ plateNumber: plateNumber.toUpperCase() });
+        if (exists) {
+            return res.status(400).json({ message: "Vehicle already registered" });
+        }
 
         const QRCode = require("qrcode");
+
         const qrCode = await QRCode.toDataURL(
-            JSON.stringify({ plateNumber, userId })
+            JSON.stringify({ plateNumber: plateNumber.toUpperCase(), userId })
         );
 
         const vehicle = await Vehicle.create({
             userId,
-            plateNumber,
+            plateNumber: plateNumber.toUpperCase(),
             qrCode
         });
 
@@ -51,13 +37,19 @@ exports.addVehicle = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 exports.getAllVehicles = async (req, res) => {
     try {
+        // 🔒 SECURITY CHECK
+        if (req.user.role !== "Admin") {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
         const vehicles = await Vehicle.find()
             .populate("userId", "name phone email")
             .sort({ createdAt: -1 });
+
         res.json(vehicles);
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -65,8 +57,11 @@ exports.getAllVehicles = async (req, res) => {
 
 exports.getMyVehicles = async (req, res) => {
     try {
-        const vehicles = await Vehicle.find({ userId: req.user._id });
+        const vehicles = await Vehicle.find({ userId: req.user.id })
+            .sort({ createdAt: -1 });
+
         res.json(vehicles);
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -74,8 +69,25 @@ exports.getMyVehicles = async (req, res) => {
 
 exports.deactivateVehicle = async (req, res) => {
     try {
-        await Vehicle.findByIdAndUpdate(req.params.id, { isActive: false });
+        const vehicle = await Vehicle.findById(req.params.id);
+
+        if (!vehicle) {
+            return res.status(404).json({ message: "Vehicle not found" });
+        }
+
+        // 🔒 only owner OR admin can deactivate
+        if (
+            vehicle.userId.toString() !== req.user.id &&
+            req.user.role !== "Admin"
+        ) {
+            return res.status(403).json({ message: "Not allowed" });
+        }
+
+        vehicle.isActive = false;
+        await vehicle.save();
+
         res.json({ message: "Vehicle deactivated" });
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
