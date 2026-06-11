@@ -157,13 +157,21 @@ exports.detectPlateOnly = async (req, res) => {
     }
 };
 
-//  All Logs
 exports.getAllLogs = async (req, res) => {
     try {
         const logs = await EntryExitLog.find()
-            .populate({ path: "vehicleId", select: "plateNumber", populate: { path: "userId", select: "name phone" } })
+            .populate({
+                path: "vehicleId",
+                select: "plateNumber userId",
+                populate: {
+                    path: "userId",
+                    select: "name phone email"
+                }
+            })
             .sort({ createdAt: -1 });
+
         res.json(logs);
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

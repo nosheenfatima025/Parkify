@@ -54,19 +54,17 @@ exports.getAllVehicles = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 exports.getMyVehicles = async (req, res) => {
     try {
-        const vehicles = await Vehicle.find({ userId: req.user.id })
-            .sort({ createdAt: -1 });
+        const vehicles = await Vehicle.find({
+            userId: req.user.id   
+        });
 
         res.json(vehicles);
-
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
-
 exports.deactivateVehicle = async (req, res) => {
     try {
         const vehicle = await Vehicle.findById(req.params.id);
