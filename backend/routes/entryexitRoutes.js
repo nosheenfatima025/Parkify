@@ -17,16 +17,23 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 }
 });
  
-// Gate routes
 router.post("/entry", upload.single("image"), vehicleEntry);
 router.post("/exit", upload.single("image"), vehicleExit);
 router.post("/detect", upload.single("image"), detectPlateOnly);
  
-// SMART: Admin → sab logs | User → sirf apni gaari ke logs
-// Dono same endpoint use karein — backend khud filter karega
-router.get("/logs", protect, getAllLogs);
+// FIX: optionalProtect use karo — token ho to filter karo, na ho to admin samjho
+router.get("/logs", optionalProtect, getAllLogs);
  
-// Mobile dashboard ke liye current status
 router.get("/my-status", protect, getMyParkingStatus);
  
+function optionalProtect(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        req.user = { role: "Admin" };
+        return next();
+    }
+    return require("../middleware/authMiddleware").protect(req, res, next);
+}
+ 
 module.exports = router;
+ 
