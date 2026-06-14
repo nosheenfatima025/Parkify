@@ -37,4 +37,4 @@ app.set('flaskUrl', FLASK_URL);
 
 app.get("/", (req, res) => res.json({ message: "Parkify API Running ✅" }));
 
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+module.exports = app;
