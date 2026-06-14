@@ -17,20 +17,19 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// FIX: optionalProtect pehle define karo, phir use karo
 function optionalProtect(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        // Token nahi aaya — web app admin hai
         req.user = { role: "Admin" };
         return next();
     }
     return protect(req, res, next);
 }
 
-router.post("/add", addVehicle);
-router.get("/all", getAllVehicles);
-router.get("/my", getMyVehicles);
-router.post("/deactivate/:id", deactivateVehicle);
+router.post("/entry", upload.single("image"), vehicleEntry);
+router.post("/exit", upload.single("image"), vehicleExit);
+router.post("/detect", upload.single("image"), detectPlateOnly);
+router.get("/logs", optionalProtect, getAllLogs);
+router.get("/my-status", protect, getMyParkingStatus);
 
 module.exports = router;
