@@ -1,21 +1,17 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 require("dotenv").config();
 
-const User = require("./models/User");
+const Admin = require("./models/Admin");
 
-async function updateAdminPassword() {
-  await mongoose.connect(process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI)
+.then(async () => {
 
-  const hashedPassword = await bcrypt.hash("NewPassword123", 10);
+  const admins = await Admin.find();
+  console.log(admins);
 
-  await User.updateOne(
-    { email: "admin@parkify.com" },
-    { $set: { passwordHash: hashedPassword } }
-  );
-
-  console.log("Admin password updated successfully");
   process.exit();
-}
 
-updateAdminPassword();
+})
+.catch(err => {
+  console.log("Error:", err.message);
+});
