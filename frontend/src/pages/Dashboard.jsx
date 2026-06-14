@@ -277,6 +277,7 @@ export default function Dashboard() {
 
                 {/* Low Wallets */}
                 <div style={card}>
+                    
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: ".9rem 1.2rem", borderBottom: "1px solid #e2e8f0" }}>
                         <span style={{ fontFamily: "Syne,sans-serif", fontWeight: 700, fontSize: ".88rem" }}>⚠️ Low Wallet Balance</span>
                         <span onClick={() => navigate("/billing")} style={{ fontSize: ".75rem", color: "#0d9488", fontWeight: 700, cursor: "pointer" }}>Top Up →</span>
