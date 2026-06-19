@@ -1,92 +1,93 @@
 # 🚗 Parkify – Smart Vehicle Management System
 
-Parkify is a full-stack web application built as my Final Year Project, designed to automate and digitize vehicle entry, exit, and parking management. The system provides a secure, efficient way to track vehicles, manage user accounts, and maintain complete activity records with real-time notifications.
+Parkify is my Final Year Project — a full-stack web app that automates vehicle entry, exit, and parking management. Instead of manual registers and paperwork, everything is tracked digitally: who entered, who left, billing, and account activity, all in one system.
 
-## 📌 Project Overview
+## Why I Built This
 
-Traditional parking management relies heavily on manual record-keeping, which is slow and error-prone. Parkify solves this by providing a digital platform where vehicle entries, exits, billing, and user accounts are all managed through a centralized, secure system.
+Most parking systems I looked at were still manual — paper logs, no real tracking, and lots of room for error. I wanted to build something that handles the whole flow digitally: from a user registering their vehicle, to tracking entries and exits, to managing billing through a wallet system, with an admin panel to oversee everything.
 
-## 🎯 Objectives
+## What It Does
 
-- Automate vehicle entry and exit tracking
-- Provide a secure user account management system
-- Maintain digital, searchable activity records
-- Reduce manual workload and human error
-- Deliver real-time alerts and reporting through an admin dashboard
+**For Users:**
+- Register and log in securely (JWT-based auth)
+- Register their vehicle(s)
+- View their entry/exit history
+- Manage their wallet/balance for billing
 
-## ⚙️ Features
+**Vehicle Tracking:**
+- Logs every entry and exit
+- Keeps a full history per vehicle
+- Configurable parking rates
 
-### 👤 User Module
-- User registration and secure login (JWT-based authentication)
-- Personal account dashboard
-- Vehicle registration and management
-- Wallet/balance management for billing
-
-### 🚙 Vehicle Module
-- Vehicle entry and exit tracking
-- Complete vehicle history logs
-- Parking rate management
-
-### 🔔 Notifications & Alerts
-- Entry/exit alerts
-- Fraud detection alerts
+**Notifications:**
+- Alerts on entry/exit
+- Fraud alerts (flags unusual activity)
 - Account activity notifications
 
-### 🛠 Admin Panel
-- User management
-- Reports and analytics
-- Vehicle activity monitoring
+**Admin Panel:**
+- Manage all users
+- View reports
+- Monitor vehicle activity across the system
 
-## 🧰 Tech Stack
+## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React.js, JavaScript |
-| Backend | Node.js, Express.js |
-| Microservice | Flask (Python) |
-| Database | MongoDB |
-| Authentication | JWT (JSON Web Tokens) |
-| Tools | Git, GitHub, VS Code |
+I used the MERN stack for the core app, plus a small Python/Flask service for one part of the backend logic.
 
-## 🏗️ Project Structure
+- **Frontend:** React.js
+- **Backend:** Node.js + Express.js
+- **Microservice:** Flask (Python)
+- **Database:** MongoDB
+- **Auth:** JWT
+
+## Project Structure
 
 ```
 Parkify/
-├── backend/          # Node.js + Express REST API
+├── backend/          # Node.js + Express API
 ├── flask_service/    # Python microservice
-├── frontend/         # React.js client application
-└── images/           # Project assets
+├── frontend/         # React client
+└── images/           # Assets
 ```
 
-## 🚀 Running Locally
+## Running It Locally
 
-**1. Clone the repository**
 ```bash
 git clone https://github.com/nosheenfatima025/Parkify.git
 cd Parkify
 ```
 
-**2. Backend Setup**
+**Backend:**
 ```bash
 cd backend
 npm install
-# Create a .env file with your own MongoDB URI, JWT secret, etc.
+# add your own .env (Mongo URI, JWT secret, etc.)
 npm start
 ```
 
-**3. Frontend Setup**
+**Frontend:**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-**4. Flask Service Setup**
+**Flask service:**
 ```bash
 cd flask_service
 pip install -r requirements.txt
 python app.py
 ```
 
-Nosheen Fatima
-[LinkedIn](#) • [GitHub](https://github.com/nosheenfatima025)
+> Note: the `.env` file isn't included in the repo for security reasons — you'll need to set up your own with your MongoDB URI and JWT secret to run it.
+
+## A Few Things I'd Improve Next
+
+- Add automated tests for the backend routes
+- Move the Flask service logic into the main backend to simplify deployment
+- Re-deploy with proper environment configs (currently running locally)
+
+---
+
+**Nosheen Fatima**
+MERN Stack Developer
+[GitHub](https://github.com/nosheenfatima025)
