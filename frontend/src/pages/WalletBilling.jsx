@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
 const avatarColors = ['#0d9488', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981', '#ec4899', '#6366f1'];
-
+const API = "http://localhost:3000/api";
 export default function WalletBilling() {
     const navigate = useNavigate();
     const [payments, setPayments] = useState([]);

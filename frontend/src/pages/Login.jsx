@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
-
+// const API = "https://fyp-dun-two.vercel.app/api";
+const API = "http://localhost:3000/api";
 export default function Login() {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
@@ -37,7 +37,8 @@ export default function Login() {
             }
 
             // Try user
-                    const uRes = await fetch(`${API}/auth/admin/login`, {
+                    // const uRes = await fetch(`${API}/auth/admin/login`, {
+                        const uRes = await fetch(`${API}/auth/user/login`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email.trim(), password }),
             });

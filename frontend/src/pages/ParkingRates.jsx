@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
-
+// const API = "https://fyp-dun-two.vercel.app/api";
+const API = "http://localhost:3000/api";
 const COLOR_MAP = {
     car: ["#0d9488", "#ccfbf1"],
     motorcycle: ["#3b82f6", "#dbeafe"],

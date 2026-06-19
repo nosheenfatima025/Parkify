@@ -55,36 +55,105 @@ exports.vehicleEntry = async (req, res) => {
 exports.vehicleExit = async (req, res) => {
     try {
         let plateNumber = req.body.plateNumber;
+
         if (req.file) {
             const result = await detectPlate(req.file.buffer, req.file.mimetype);
-            if (result.success && result.plate) plateNumber = result.plate;
-            else return res.status(400).json({ message: "Could not detect plate from image" });
+
+            if (result.success && result.plate) {
+                plateNumber = result.plate;
+            } else {
+                return res.status(400).json({
+                    message: "Could not detect plate from image"
+                });
+            }
         }
-        if (!plateNumber) return res.status(400).json({ message: "Plate number required" });
+
+        if (!plateNumber) {
+            return res.status(400).json({
+                message: "Plate number required"
+            });
+        }
+
         const vehicle = await Vehicle.findOne({ plateNumber });
-        if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
-        const log = await EntryExitLog.findOne({ vehicleId: vehicle._id, status: "IN" });
-        if (!log) return res.status(400).json({ message: "No active entry found" });
-        const minutes = Math.ceil((Date.now() - log.entryTime) / 60000);
+
+        if (!vehicle) {
+            return res.status(404).json({
+                message: "Vehicle not found"
+            });
+        }
+
+        const log = await EntryExitLog.findOne({
+            vehicleId: vehicle._id,
+            status: "IN"
+        });
+
+        if (!log) {
+            return res.status(400).json({
+                message: "No active entry found"
+            });
+        }
+
+        const minutes = Math.ceil(
+            (Date.now() - log.entryTime) / 60000
+        );
+
         const hours = Math.ceil(minutes / 60);
         const amount = hours * RATE_PER_HOUR;
-        const wallet = await Wallet.findOne({ userId: vehicle.userId });
-        if (!wallet || wallet.balance < amount)
-            return res.status(400).json({ message: `Insufficient balance. Need Rs.${amount}` });
-        wallet.balance -= amount;
-        await wallet.save();
+
+        const wallet = await Wallet.findOne({
+            userId: vehicle.userId
+        });
+
+        let paymentStatus = "PENDING";
+
+        if (wallet && wallet.balance >= amount) {
+            wallet.balance -= amount;
+            await wallet.save();
+
+            paymentStatus = "SUCCESS";
+
+            await Notification.create({
+                userId: vehicle.userId,
+                title: "Payment Deducted",
+                message: `Rs.${amount} deducted for ${hours}h parking`
+            });
+        } else {
+            await Notification.create({
+                userId: vehicle.userId,
+                title: "Payment Pending",
+                message: `Rs.${amount} parking fee is pending`
+            });
+        }
+
         log.exitTime = new Date();
         log.durationMinutes = minutes;
         log.amountCharged = amount;
         log.status = "OUT";
+
         await log.save();
-        await Payment.create({ userId: vehicle.userId, vehicleId: vehicle._id, amount, status: "SUCCESS" });
-        await Notification.create({ userId: vehicle.userId, title: "Payment Deducted", message: `Rs.${amount} deducted for ${hours}h parking` });
-        res.json({ message: "Exit successful", plateNumber, amount, duration: `${Math.floor(minutes / 60)}h ${minutes % 60}m` });
+
+        await Payment.create({
+            userId: vehicle.userId,
+            vehicleId: vehicle._id,
+            amount,
+            status: paymentStatus
+        });
+
+        res.json({
+            message: "Exit successful",
+            plateNumber,
+            amount,
+            paymentStatus,
+            duration: `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+        });
+
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({
+            message: err.message
+        });
     }
 };
+
 
 exports.detectPlateOnly = async (req, res) => {
     try {

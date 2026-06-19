@@ -25,7 +25,7 @@ exports.refreshToken = (req, res) => {
             httpOnly: true,
             sameSite: "lax",
             secure: false,
-            maxAge: 60 * 60 * 1000 // 1 hour
+            maxAge: 60 * 60 * 1000 
         });
 
         return res.json({

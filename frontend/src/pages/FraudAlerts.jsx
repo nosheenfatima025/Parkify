@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
+// const API = "https://fyp-dun-two.vercel.app/api";
+const API = "http://localhost:3000/api";
 
 const severityIcons = { critical: "🚨", high: "⚠️", medium: "🔍", low: "ℹ️" };
 const typeIcons = { "QR Mismatch": "🔄", "Unknown Plate": "🚫", "Repeated Attempt": "🔁", "Overstay": "⏰", "Blacklisted Vehicle": "⛔", "Cloned QR": "📵", "Manual Flag": "🚩", "balance": "💸", "manual": "🚩" };

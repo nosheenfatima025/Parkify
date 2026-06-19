@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
-
+// const API = "http://localhost:3000/api";
+const API = "http://192.168.1.5:3000/api";
 export default function Register() {
     const navigate = useNavigate();
     const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "" });

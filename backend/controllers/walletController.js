@@ -1,12 +1,19 @@
-
 const Wallet = require("../models/Wallet");
 const Vehicle = require("../models/Vehicle");
 const User = require("../models/User");
 
+// Wallet dhundo ya naya banao
+const findOrCreateWallet = async (userId) => {
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+        wallet = await Wallet.create({ userId, balance: 0, lastUpdated: new Date() });
+    }
+    return wallet;
+};
+
 exports.getWallet = async (req, res) => {
     try {
-        const wallet = await Wallet.findOne({ userId: req.user._id });
-        if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+        const wallet = await findOrCreateWallet(req.user._id);
         res.json({ balance: wallet.balance });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -18,9 +25,7 @@ exports.rechargeWallet = async (req, res) => {
         const { amount } = req.body;
         if (!amount || amount <= 0) return res.status(400).json({ message: "Invalid amount" });
 
-        const wallet = await Wallet.findOne({ userId: req.user._id });
-        if (!wallet) return res.status(404).json({ message: "Wallet not found" });
-
+        const wallet = await findOrCreateWallet(req.user._id);
         wallet.balance += Number(amount);
         wallet.lastUpdated = new Date();
         await wallet.save();
@@ -49,8 +54,10 @@ exports.adminTopUp = async (req, res) => {
         const vehicle = await Vehicle.findOne({ plateNumber });
         if (!vehicle) return res.status(404).json({ message: "Vehicle not found" });
 
-        const wallet = await Wallet.findOne({ userId: vehicle.userId });
-        if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+        let wallet = await Wallet.findOne({ userId: vehicle.userId });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId: vehicle.userId, balance: 0, lastUpdated: new Date() });
+        }
 
         wallet.balance += Number(amount);
         wallet.lastUpdated = new Date();

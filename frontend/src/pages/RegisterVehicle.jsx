@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
-
+// const API = "https://fyp-dun-two.vercel.app/api";
+const API = "http://localhost:3000/api";
 export default function RegisterVehicle() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("manual"); // manual | scan

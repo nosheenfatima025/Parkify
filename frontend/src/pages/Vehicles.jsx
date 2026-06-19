@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://fyp-dun-two.vercel.app/api";
+const API = "http://localhost:3000/api";
 const avatarColors = ['#0d9488', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981', '#ec4899', '#6366f1'];
 
 export default function Vehicles() {
@@ -17,21 +17,27 @@ export default function Vehicles() {
     const [currentPage, setCurrentPage] = useState(1);
     const PER_PAGE = 8;
 
+    const getHeaders = () => {
+const token = localStorage.getItem("parkify_token");
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
     const fetchVehicles = async () => {
         try {
+            const headers = getHeaders();
             const [vRes, logRes] = await Promise.all([
-                fetch(`${API}/vehicles/all`),
-                fetch(`${API}/parking/logs`)
+                fetch(`${API}/vehicles/all`, { headers }),
+                fetch(`${API}/parking/logs`, { headers })
             ]);
             const vData = await vRes.json();
             const logData = await logRes.json();
 
-            // Find currently parked plates
             const parkedPlates = new Set(
-                logData.filter(l => l.status === "IN").map(l => l.vehicleId?.plateNumber)
+                Array.isArray(logData) ? logData.filter(l => l.status === "IN").map(l => l.vehicleId?.plateNumber) : []
             );
 
-            const enriched = vData.map(v => ({
+            const arr = Array.isArray(vData) ? vData : [];
+            const enriched = arr.map(v => ({
                 ...v,
                 ownerName: v.userId?.name || "Unknown",
                 ownerPhone: v.userId?.phone || "—",
@@ -82,7 +88,10 @@ export default function Vehicles() {
     const deactivateVehicle = async (id) => {
         if (!confirm("Are you sure you want to deactivate this vehicle?")) return;
         try {
-            await fetch(`${API}/vehicles/${id}/deactivate`, { method: "PUT" });
+            await fetch(`${API}/vehicles/${id}/deactivate`, {
+                method: "PUT",
+                headers: getHeaders()
+            });
             showToast("✅ Vehicle deactivated successfully");
             fetchVehicles();
         } catch (err) {
@@ -90,7 +99,6 @@ export default function Vehicles() {
         }
     };
 
-    // Pagination
     const totalPages = Math.ceil(filtered.length / PER_PAGE);
     const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
@@ -122,8 +130,6 @@ export default function Vehicles() {
 
     return (
         <div style={{ fontFamily: "'DM Sans',sans-serif", color: "#0f172a" }}>
-
-            {/* TOPBAR */}
             <div style={{ background: "#0d9488", height: "64px", padding: "0 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: "12px", marginBottom: "24px", boxShadow: "0 2px 12px rgba(13,148,136,.3)" }}>
                 <span style={{ fontFamily: "Syne,sans-serif", fontWeight: 800, fontSize: "1.4rem", color: "white" }}>Vehicles</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -132,7 +138,6 @@ export default function Vehicles() {
                 </div>
             </div>
 
-            {/* PAGE HEADER */}
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
                 <div>
                     <div style={{ fontSize: ".8rem", color: "#64748b", marginBottom: ".4rem" }}>
@@ -147,7 +152,6 @@ export default function Vehicles() {
                 </button>
             </div>
 
-            {/* STATS */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1rem", marginBottom: "1.75rem" }}>
                 {[
                     { icon: "🚗", val: stats.total, label: "Total Vehicles", bg: "#ccfbf1" },
@@ -165,7 +169,6 @@ export default function Vehicles() {
                 ))}
             </div>
 
-            {/* TOOLBAR */}
             <div style={{ background: "white", borderRadius: "14px", padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem", boxShadow: "0 1px 3px rgba(0,0,0,.05)", flexWrap: "wrap" }}>
                 <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
                     <span style={{ position: "absolute", left: ".9rem", top: "50%", transform: "translateY(-50%)", color: "#64748b" }}>🔍</span>
@@ -185,7 +188,6 @@ export default function Vehicles() {
                 </button>
             </div>
 
-            {/* TABLE */}
             <div style={card}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.1rem 1.4rem", borderBottom: "1px solid #e2e8f0" }}>
                     <div style={{ fontFamily: "Syne,sans-serif", fontWeight: 700, fontSize: "1rem", display: "flex", alignItems: "center", gap: ".5rem" }}>
@@ -199,7 +201,7 @@ export default function Vehicles() {
                         <div style={{ fontSize: "3.5rem" }}>🚗</div>
                         <h3 style={{ fontFamily: "Syne,sans-serif", fontWeight: 700, marginTop: ".75rem", color: "#0f172a" }}>No vehicles found</h3>
                         <p style={{ fontSize: ".88rem", marginTop: ".35rem" }}>
-                            {vehicles.length === 0 ? "No vehicles registered yet. Register a vehicle to get started." : "Try adjusting your search or filters."}
+                            {vehicles.length === 0 ? "No vehicles registered yet." : "Try adjusting your search or filters."}
                         </p>
                         {vehicles.length === 0 && (
                             <button onClick={() => navigate("/register-vehicle")}
@@ -261,7 +263,6 @@ export default function Vehicles() {
                     </div>
                 )}
 
-                {/* PAGINATION */}
                 {totalPages > 1 && (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.4rem", borderTop: "1px solid #e2e8f0", fontSize: ".82rem", color: "#64748b" }}>
                         <span>Showing {((currentPage - 1) * PER_PAGE) + 1}–{Math.min(currentPage * PER_PAGE, filtered.length)} of {filtered.length} vehicles</span>
@@ -281,7 +282,6 @@ export default function Vehicles() {
                 )}
             </div>
 
-            {/* VIEW MODAL */}
             {selectedVehicle && (
                 <div onClick={(e) => e.target === e.currentTarget && setSelectedVehicle(null)}
                     style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,.5)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
@@ -291,7 +291,6 @@ export default function Vehicles() {
                             <button onClick={() => setSelectedVehicle(null)} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: "#f1f5f9", cursor: "pointer", fontSize: "1rem" }}>✕</button>
                         </div>
                         <div style={{ padding: "1.5rem 1.75rem" }}>
-                            {/* Owner Info */}
                             <div style={{ display: "flex", alignItems: "center", gap: ".85rem", marginBottom: "1rem", paddingBottom: "1rem", borderBottom: "1px solid #e2e8f0" }}>
                                 <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "#0d9488", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 700, fontSize: "1rem" }}>{initials(selectedVehicle.ownerName)}</div>
                                 <div>
@@ -300,7 +299,6 @@ export default function Vehicles() {
                                 </div>
                                 <div style={{ marginLeft: "auto" }}>{statusBadge(selectedVehicle.status)}</div>
                             </div>
-
                             {[
                                 ["Number Plate", <span style={plateStyle}>{selectedVehicle.plateNumber}</span>],
                                 ["Status", statusBadge(selectedVehicle.status)],
@@ -311,8 +309,6 @@ export default function Vehicles() {
                                     <span style={{ fontWeight: 600 }}>{val}</span>
                                 </div>
                             ))}
-
-                            {/* QR Section */}
                             <div style={{ background: "#f0fdfa", border: "2px dashed #0d9488", borderRadius: "12px", padding: "1.25rem", textAlign: "center", marginTop: "1rem" }}>
                                 {selectedVehicle.qrCode ? (
                                     <img src={selectedVehicle.qrCode} alt="QR Code" style={{ width: "120px", height: "120px", borderRadius: "8px" }} />
@@ -327,14 +323,11 @@ export default function Vehicles() {
                 </div>
             )}
 
-            {/* TOAST */}
             {toast && (
                 <div style={{ position: "fixed", top: "80px", right: "2rem", background: "#0d9488", color: "white", padding: ".9rem 1.4rem", borderRadius: "12px", fontWeight: 600, fontSize: ".88rem", boxShadow: "0 8px 24px rgba(13,148,136,.35)", zIndex: 999 }}>
                     {toast}
                 </div>
             )}
-
         </div>
     );
 }
-
